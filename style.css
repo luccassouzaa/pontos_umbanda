@@ -1,0 +1,56 @@
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #f8fafc;
+    color: #1e293b;
+}
+h1, h2, h3, .brand-font {
+    font-family: 'Cinzel', serif;
+}
+
+/* Estilo de 2 colunas para impressão e visualização desktop */
+.columns-container {
+    column-count: 2;
+    column-gap: 2.5rem;
+    column-rule: 1px solid #e2e8f0;
+}
+
+.point-card {
+    break-inside: avoid;
+    margin-bottom: 1.5rem;
+}
+
+/* Modal backdrop transition */
+.modal-backdrop {
+    background-color: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(4px);
+}
+
+@media print {
+    .no-print {
+        display: none !important;
+    }
+    body {
+        background-color: #ffffff;
+        color: #000000;
+        padding: 0 !important;
+    }
+    .page-container {
+        box-shadow: none !important;
+        padding: 0 !important;
+        max-width: 100% !important;
+        border: none !important;
+    }
+    .columns-container {
+        column-count: 2 !important;
+        column-gap: 2rem !important;
+    }
+    .point-card {
+        page-break-inside: avoid;
+    }
+}
+
+@media (max-width: 768px) {
+    .columns-container {
+        column-count: 1;
+    }
+}
