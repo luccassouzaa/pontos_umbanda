@@ -111,10 +111,16 @@
         </div>
         
         <div class="flex flex-wrap gap-2.5 items-center">
-            <!-- Botão Adicionar Ponto -->
-            <button onclick="openAddModal()" class="px-4 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white font-medium text-sm rounded-xl shadow-sm transition flex items-center justify-center gap-2">
+            <!-- Botão Ver Sugestões (Apenas Admin) -->
+            <button id="btnSugestoesAdmin" onclick="openSugestoesModal()" class="hidden px-3 py-2.5 bg-purple-700 hover:bg-purple-800 text-white font-medium text-sm rounded-xl shadow-sm transition flex items-center justify-center gap-2">
+                <span>📩 Sugestões</span>
+                <span id="badgeSugestoes" class="bg-purple-950 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">0</span>
+            </button>
+
+            <!-- Botão Adicionar / Sugerir Ponto -->
+            <button id="btnMainAdd" onclick="openAddModal()" class="px-4 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white font-medium text-sm rounded-xl shadow-sm transition flex items-center justify-center gap-2">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
-                <span>Adicionar Ponto</span>
+                <span id="lblBtnMainAdd">Sugerir Ponto</span>
             </button>
 
             <!-- Botão Exportar / Backup GitHub -->
@@ -127,6 +133,11 @@
             <button onclick="window.print()" class="px-4 py-2.5 bg-amber-800 hover:bg-amber-900 text-white font-medium text-sm rounded-xl shadow-sm transition flex items-center justify-center gap-2">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
                 <span>Imprimir / PDF</span>
+            </button>
+
+            <!-- Botão Login / Logout Admin -->
+            <button id="btnLogin" onclick="toggleLoginModal()" class="px-3 py-2.5 bg-amber-100 hover:bg-amber-200 text-amber-900 font-medium text-sm rounded-xl border border-amber-300 transition flex items-center justify-center gap-1.5">
+                <span id="lblBtnLogin">🔐 Admin</span>
             </button>
         </div>
     </header>
@@ -193,6 +204,40 @@
 
     <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 no-print pointer-events-none"></div>
 
+    <!-- MODAL DE LOGIN ADMIN -->
+    <div id="loginModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 modal-backdrop no-print">
+        <div class="bg-white w-full max-w-sm rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
+            <div class="bg-amber-900 px-6 py-4 flex justify-between items-center text-white">
+                <h3 class="text-base font-bold brand-font">Área Administrativa</h3>
+                <button onclick="closeLoginModal()" class="text-amber-200 hover:text-white transition">✕</button>
+            </div>
+            <form onsubmit="handleLoginSubmit(event)" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Usuário</label>
+                    <input type="text" id="loginUser" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Senha</label>
+                    <input type="password" id="loginPass" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 outline-none">
+                </div>
+                <button type="submit" class="w-full py-2 bg-amber-800 hover:bg-amber-900 text-white text-sm font-medium rounded-xl transition">Entrar como Admin</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL DE VER SUGESTÕES (APENAS ADMIN) -->
+    <div id="sugestoesModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 modal-backdrop no-print">
+        <div class="bg-white w-full max-w-2xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[85vh]">
+            <div class="bg-purple-900 px-6 py-4 flex justify-between items-center text-white">
+                <h3 class="text-base font-bold brand-font">Sugestões de Pontos Pendentes</h3>
+                <button onclick="closeSugestoesModal()" class="text-purple-200 hover:text-white transition">✕</button>
+            </div>
+            <div id="listaSugestoes" class="p-6 overflow-y-auto space-y-4 text-xs text-slate-800">
+                <!-- Preenchido dinamicamente -->
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL DE CONFIRMAÇÃO DE EXCLUSÃO -->
     <div id="deleteModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 modal-backdrop no-print">
         <div class="bg-white w-full max-w-sm rounded-2xl shadow-2xl border border-slate-200 p-6 text-center space-y-4">
@@ -224,9 +269,9 @@
                             📋 Copiar SQL
                         </button>
                     </div>
-                    <p class="text-[11px] text-amber-800">Se a sincronização apresentar erros, acesse o <b>SQL Editor</b> do seu painel Supabase e execute este comando para criar a tabela e as permissões RLS:</p>
+                    <p class="text-[11px] text-amber-800">Acesse o <b>SQL Editor</b> do seu painel Supabase e execute este comando para criar a tabela de sugestões:</p>
                     <pre id="sqlCodeBlock" class="bg-slate-900 text-emerald-400 p-2.5 rounded-lg text-[10px] overflow-x-auto select-all font-mono">
-create table if not exists public.pontos (
+create table if not exists public.sugestao_ponto (
   id bigint generated by default as identity primary key,
   "linhaId" integer not null,
   toque text,
@@ -234,12 +279,12 @@ create table if not exists public.pontos (
   letra text,
   autor text,
   link text,
+  autoral boolean default false,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
--- Habilitar acesso público para leitura/escrita
-alter table public.pontos enable row level security;
-create policy "Acesso total publico" on public.pontos for all using (true) with check (true);
+alter table public.sugestao_ponto enable row level security;
+create policy "Acesso total publico sugestoes" on public.sugestao_ponto for all using (true) with check (true);
                     </pre>
                 </div>
 
@@ -283,7 +328,7 @@ create policy "Acesso total publico" on public.pontos for all using (true) with 
         </div>
     </div>
 
-    <!-- MODAL DE ADICIONAR / EDITAR PONTO -->
+    <!-- MODAL DE ADICIONAR / EDITAR OU SUGERIR PONTO -->
     <div id="pontoModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 modal-backdrop no-print">
         <div class="bg-white w-full max-w-xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden transform transition-all flex flex-col max-h-[90vh]">
             
@@ -346,17 +391,25 @@ create policy "Acesso total publico" on public.pontos for all using (true) with 
 
                     <div>
                         <label for="formLink" class="block text-xs font-semibold text-slate-700 mb-1">
-                            Link de Áudio / YouTube <span class="text-slate-400 font-normal">(Opcional)</span>
+                            Link de Áudio / YouTube <span id="formLinkReqStar" class="text-slate-400 font-normal">(Opcional)</span>
                         </label>
                         <input type="url" id="formLink" placeholder="https://youtube.com/..." class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none">
                     </div>
+                </div>
+
+                <!-- Campo de Ponto Autoral (Exibido para envio de sugestão) -->
+                <div id="divAutoralContainer" class="p-3 bg-amber-50 rounded-xl border border-amber-200 flex items-center gap-2">
+                    <input type="checkbox" id="formAutoral" onchange="toggleAutoralRequirement()" class="w-4 h-4 text-amber-800 rounded focus:ring-amber-500">
+                    <label for="formAutoral" class="text-xs font-semibold text-amber-900 cursor-pointer">
+                        Este ponto é Autoral? <span class="font-normal text-amber-800">(Obrigatório informar o link de áudio/vídeo)</span>
+                    </label>
                 </div>
 
                 <div class="pt-4 border-t border-slate-100 flex justify-end gap-3">
                     <button type="button" onclick="closeAddModal()" class="px-4 py-2 border border-slate-300 text-slate-600 hover:bg-slate-100 rounded-xl text-sm font-medium transition">
                         Cancelar
                     </button>
-                    <button type="submit" class="px-5 py-2 bg-amber-800 hover:bg-amber-900 text-white rounded-xl text-sm font-medium shadow-sm transition">
+                    <button type="submit" id="btnSubmitForm" class="px-5 py-2 bg-amber-800 hover:bg-amber-900 text-white rounded-xl text-sm font-medium shadow-sm transition">
                         Salvar Ponto
                     </button>
                 </div>
@@ -376,6 +429,12 @@ create policy "Acesso total publico" on public.pontos for all using (true) with 
         let supabaseClient = null;
         let isSupabaseOnline = false;
         let pontoToDeleteId = null;
+
+        // Estado de autenticação Admin
+        let isAdminLoggedIn = sessionStorage.getItem('is_admin_logged') === 'true';
+
+        // Lista de sugestões pendentes
+        let sugestoesState = [];
 
         // Lista oficial das 21 Linhas de Umbanda
         const LINHAS_UMBANDA = [
@@ -402,7 +461,6 @@ create policy "Acesso total publico" on public.pontos for all using (true) with 
             { id: 21, name: "21. Esquerda (Exu, Pomba Gira e Exu Mirim)" }
         ];
 
-        // Acervo inicial de fallback
         const DEFAULT_POINTS = [];
 
         window.pointsState = [];
@@ -423,6 +481,7 @@ create policy "Acesso total publico" on public.pontos for all using (true) with 
             const syncText = document.getElementById('syncText');
 
             loadPointsStateLocally();
+            updateAdminUI();
             renderCatalog();
 
             if (!supabaseClient) {
@@ -440,6 +499,7 @@ create policy "Acesso total publico" on public.pontos for all using (true) with 
                 if (syncDot) syncDot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500";
                 if (syncText) syncText.textContent = "Sincronizado com o banco de dados Supabase (online)";
                 subscribeRealtime();
+                if (isAdminLoggedIn) fetchSugestoes();
             } else {
                 isSupabaseOnline = false;
                 if (syncDot) syncDot.className = "w-2.5 h-2.5 rounded-full bg-amber-500";
@@ -454,9 +514,6 @@ create policy "Acesso total publico" on public.pontos for all using (true) with 
                 const { data, error } = await supabaseClient.from('pontos').select('*');
                 if (error) {
                     console.warn("Aviso ao buscar dados no Supabase:", error.message);
-                    if (error.message.includes('relation "public.pontos" does not exist') || error.code === '42P01') {
-                        showToast("Tabela 'pontos' não encontrada no Supabase. Copie o SQL nas configurações!", "error");
-                    }
                     return false;
                 }
 
@@ -500,15 +557,203 @@ create policy "Acesso total publico" on public.pontos for all using (true) with 
         }
 
         /* -------------------------------------------------------------
-           FUNÇÃO: INSERIR PONTO NO SUPABASE (INSERT)
+           CONTROLE DE AUTENTICAÇÃO E INTERFACE ADMIN
+           ------------------------------------------------------------- */
+        function updateAdminUI() {
+            const lblBtnLogin = document.getElementById('lblBtnLogin');
+            const lblBtnMainAdd = document.getElementById('lblBtnMainAdd');
+            const btnSugestoesAdmin = document.getElementById('btnSugestoesAdmin');
+
+            if (isAdminLoggedIn) {
+                lblBtnLogin.textContent = "🔓 Sair (Admin)";
+                lblBtnMainAdd.textContent = "Adicionar Ponto";
+                if (btnSugestoesAdmin) btnSugestoesAdmin.classList.remove('hidden');
+            } else {
+                lblBtnLogin.textContent = "🔐 Admin";
+                lblBtnMainAdd.textContent = "Sugerir Ponto";
+                if (btnSugestoesAdmin) btnSugestoesAdmin.classList.add('hidden');
+            }
+        }
+
+        function toggleLoginModal() {
+            if (isAdminLoggedIn) {
+                isAdminLoggedIn = false;
+                sessionStorage.removeItem('is_admin_logged');
+                updateAdminUI();
+                renderCatalog();
+                showToast("Você saiu do modo administrador.", "info");
+            } else {
+                document.getElementById('loginModal').classList.remove('hidden');
+            }
+        }
+
+        function closeLoginModal() {
+            document.getElementById('loginModal').classList.add('hidden');
+        }
+
+        function handleLoginSubmit(event) {
+            event.preventDefault();
+            const u = document.getElementById('loginUser').value.trim();
+            const p = document.getElementById('loginPass').value.trim();
+
+            if (u === "admin" && p === "luccas10admin") {
+                isAdminLoggedIn = true;
+                sessionStorage.setItem('is_admin_logged', 'true');
+                closeLoginModal();
+                updateAdminUI();
+                renderCatalog();
+                fetchSugestoes();
+                showToast("Login de Admin efetuado com sucesso!", "success");
+            } else {
+                showToast("Usuário ou senha incorretos.", "error");
+            }
+        }
+
+        /* -------------------------------------------------------------
+           SISTEMA DE SUGESTÕES DE PONTOS
+           ------------------------------------------------------------- */
+        function toggleAutoralRequirement() {
+            const isAutoral = document.getElementById('formAutoral').checked;
+            const star = document.getElementById('formLinkReqStar');
+            const linkInput = document.getElementById('formLink');
+
+            if (isAutoral) {
+                star.innerHTML = '<span class="text-red-500">* (Obrigatório para ponto autoral)</span>';
+                linkInput.required = true;
+            } else {
+                star.innerHTML = '(Opcional)';
+                linkInput.required = false;
+            }
+        }
+
+        async function sendSugestaoPonto(sugestaoData) {
+            if (!supabaseClient) {
+                showToast("Erro ao conectar no banco de dados para enviar sugestão.", "error");
+                return false;
+            }
+
+            try {
+                const { error } = await supabaseClient
+                    .from('sugestao_ponto')
+                    .insert([sugestaoData]);
+
+                if (error) {
+                    console.error("Erro ao enviar sugestão:", error);
+                    showToast(`Erro ao enviar sugestão: ${error.message}`, "error");
+                    return false;
+                }
+
+                showToast("Obrigado! Sua sugestão foi enviada para aprovação do curimbeiro.", "success");
+                return true;
+            } catch (e) {
+                console.error("Exceção ao enviar sugestão:", e);
+                return false;
+            }
+        }
+
+        async function fetchSugestoes() {
+            if (!supabaseClient || !isAdminLoggedIn) return;
+
+            try {
+                const { data, error } = await supabaseClient.from('sugestao_ponto').select('*');
+                if (error) {
+                    console.warn("Erro ao buscar sugestões:", error.message);
+                    return;
+                }
+
+                sugestoesState = data || [];
+                const badge = document.getElementById('badgeSugestoes');
+                if (badge) badge.textContent = sugestoesState.length;
+            } catch (e) {
+                console.error("Exceção ao buscar sugestões:", e);
+            }
+        }
+
+        function openSugestoesModal() {
+            renderSugestoesLista();
+            document.getElementById('sugestoesModal').classList.remove('hidden');
+        }
+
+        function closeSugestoesModal() {
+            document.getElementById('sugestoesModal').classList.add('hidden');
+        }
+
+        function renderSugestoesLista() {
+            const container = document.getElementById('listaSugestoes');
+            if (!container) return;
+
+            if (sugestoesState.length === 0) {
+                container.innerHTML = `<p class="text-center text-slate-400 py-6 italic">Nenhuma sugestão pendente no momento.</p>`;
+                return;
+            }
+
+            container.innerHTML = sugestoesState.map(s => {
+                const linhaObj = LINHAS_UMBANDA.find(l => l.id === s.linhaId);
+                const nomeLinha = linhaObj ? linhaObj.name : `Linha ${s.linhaId}`;
+
+                return `
+                    <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <span class="text-[10px] bg-purple-100 text-purple-900 px-2 py-0.5 rounded font-bold uppercase">${nomeLinha}</span>
+                                <span class="text-[10px] bg-amber-100 text-amber-900 px-2 py-0.5 rounded font-bold uppercase ml-1">${s.toque}</span>
+                                ${s.autoral ? `<span class="text-[10px] bg-red-100 text-red-800 px-2 py-0.5 rounded font-bold uppercase ml-1">🎵 Autoral</span>` : ''}
+                                ${s.titulo ? `<h4 class="font-bold text-slate-800 text-sm mt-1">${escapeHTML(s.titulo)}</h4>` : ''}
+                            </div>
+                        </div>
+                        <p class="whitespace-pre-line italic text-slate-700 font-sans">${escapeAndFormatLetra(s.letra)}</p>
+                        ${s.autor ? `<p class="text-[10px] text-slate-500">Autor: ${escapeHTML(s.autor)}</p>` : ''}
+                        ${s.link ? `<p class="text-[10px]"><a href="${escapeHTML(s.link)}" target="_blank" class="text-blue-600 underline">Ouvir / Acessar Link</a></p>` : ''}
+                        
+                        <div class="pt-2 border-t border-slate-200 flex justify-end gap-2">
+                            <button onclick="rejeitarSugestao(${s.id})" class="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-[11px] font-medium rounded-lg transition">Rejeitar</button>
+                            <button onclick="aprovarSugestao(${s.id})" class="px-3 py-1 bg-emerald-700 hover:bg-emerald-800 text-white text-[11px] font-medium rounded-lg transition">Aprovar e Adicionar</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function aprovarSugestao(id) {
+            const sugestao = sugestoesState.find(s => s.id === id);
+            if (!sugestao) return;
+
+            const novoPonto = {
+                linhaId: sugestao.linhaId,
+                toque: sugestao.toque,
+                titulo: sugestao.titulo,
+                letra: sugestao.letra,
+                autor: sugestao.autor,
+                link: sugestao.link
+            };
+
+            window.pointsState.push(novoPonto);
+            await insertPonto(novoPonto);
+
+            // Deleta das sugestões
+            await supabaseClient.from('sugestao_ponto').delete().eq('id', id);
+
+            showToast("Sugestão aprovada e ponto adicionado!", "success");
+            await fetchSugestoes();
+            renderSugestoesLista();
+            renderCatalog();
+        }
+
+        async function rejeitarSugestao(id) {
+            await supabaseClient.from('sugestao_ponto').delete().eq('id', id);
+            showToast("Sugestão rejeitada.", "info");
+            await fetchSugestoes();
+            renderSugestoesLista();
+        }
+
+        /* -------------------------------------------------------------
+           FUNÇÕES DE BANCO E FORMULÁRIO (INSERT / UPDATE / DELETE)
            ------------------------------------------------------------- */
         async function insertPonto(pontoData) {
             savePointsStateLocally();
             if (supabaseClient) {
                 try {
-                    // Remove id caso seja gerado como identity/autoincrement no banco
                     const { id, ...dataToInsert } = pontoData;
-                    
                     const { data, error } = await supabaseClient
                         .from('pontos')
                         .insert([dataToInsert])
@@ -521,7 +766,6 @@ create policy "Acesso total publico" on public.pontos for all using (true) with 
                     }
 
                     if (data && data.length > 0) {
-                        // Atualiza o objeto no estado local com o ID gerado pelo banco
                         const createdItem = data[0];
                         pontoData.id = createdItem.id;
                         savePointsStateLocally();
@@ -535,9 +779,6 @@ create policy "Acesso total publico" on public.pontos for all using (true) with 
             return true;
         }
 
-        /* -------------------------------------------------------------
-           FUNÇÃO: ALTERAR PONTO NO SUPABASE (UPDATE)
-           ------------------------------------------------------------- */
         async function updatePonto(pontoData) {
             savePointsStateLocally();
             if (supabaseClient) {
@@ -568,9 +809,6 @@ create policy "Acesso total publico" on public.pontos for all using (true) with 
             return true;
         }
 
-        /* -------------------------------------------------------------
-           FUNÇÃO: DELETAR PONTO NO SUPABASE (DELETE)
-           ------------------------------------------------------------- */
         async function dbDeletePonto(id) {
             savePointsStateLocally();
             if (supabaseClient) {
@@ -594,9 +832,6 @@ create policy "Acesso total publico" on public.pontos for all using (true) with 
             return true;
         }
 
-        /* -------------------------------------------------------------
-           SUBMISSÃO DO FORMULÁRIO (GERENCIA INSERT E UPDATE)
-           ------------------------------------------------------------- */
         async function handleFormSubmit(event) {
             event.preventDefault();
 
@@ -607,14 +842,37 @@ create policy "Acesso total publico" on public.pontos for all using (true) with 
             const letra = document.getElementById('formLetra').value.trim();
             const autor = document.getElementById('formAutor').value.trim();
             const link = document.getElementById('formLink').value.trim();
+            const autoral = document.getElementById('formAutoral').checked;
 
             if (!linhaId || !toque || !letra) {
                 showToast("Por favor, preencha todos os campos obrigatórios (*)", "error");
                 return;
             }
 
+            // Validação de Ponto Autoral caso não esteja logado ou esteja sugerindo
+            if (!isAdminLoggedIn && autoral && !link) {
+                showToast("Para pontos autorais, o link de áudio/vídeo é obrigatório!", "error");
+                return;
+            }
+
+            if (!isAdminLoggedIn) {
+                // MODO SUGESTÃO (Usuário Comum)
+                const sugestaoObj = {
+                    linhaId,
+                    toque,
+                    titulo,
+                    letra,
+                    autor,
+                    link,
+                    autoral
+                };
+                await sendSugestaoPonto(sugestaoObj);
+                closeAddModal();
+                return;
+            }
+
+            // MODO ADMIN (Adicionar ou Editar Direto)
             if (editingId) {
-                // OPERAÇÃO DE EDIÇÃO / ALTERAÇÃO
                 const parsedId = isNaN(editingId) ? editingId : Number(editingId);
                 const pontoToUpdate = {
                     id: parsedId,
@@ -635,7 +893,6 @@ create policy "Acesso total publico" on public.pontos for all using (true) with 
                 showToast("Ponto alterado com sucesso!", "success");
 
             } else {
-                // OPERAÇÃO DE INCLUSÃO / INSERÇÃO
                 const novoPonto = {
                     linhaId,
                     toque,
@@ -754,7 +1011,7 @@ create policy "Acesso total publico" on public.pontos for all using (true) with 
                         <h2 class="text-base sm:text-lg font-bold text-amber-900 border-b-2 border-amber-800/40 pb-1 mb-3 brand-font flex justify-between items-center">
                             <span>${linha.name}</span>
                             <button onclick="openAddModal(${linha.id})" class="no-print text-xs font-sans text-emerald-700 hover:text-emerald-900 font-normal hover:underline flex items-center gap-0.5">
-                                + adicionar
+                                ${isAdminLoggedIn ? '+ adicionar' : '+ sugerir'}
                             </button>
                         </h2>
                         <div class="space-y-4">
@@ -796,12 +1053,14 @@ create policy "Acesso total publico" on public.pontos for all using (true) with 
                             ${ponto.titulo ? `<span class="text-xs font-semibold text-slate-700">· ${escapeHTML(ponto.titulo)}</span>` : ''}
                         </div>
 
-                        <div class="no-print opacity-0 group-hover:opacity-100 transition flex items-center gap-2 text-xs">
+                        <div class="no-print transition flex items-center gap-2 text-xs">
                             ${ponto.link ? `<a href="${escapeHTML(ponto.link)}" target="_blank" title="Ouvir no YouTube" class="text-red-600 hover:text-red-800">
                                 <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
                             </a>` : ''}
-                            <button onclick="editPonto('${ponto.id}')" title="Editar" class="text-slate-400 hover:text-amber-800">✏️</button>
-                            <button onclick="deletePonto('${ponto.id}')" title="Excluir" class="text-slate-400 hover:text-red-600">🗑️</button>
+                            ${isAdminLoggedIn ? `
+                                <button onclick="editPonto('${ponto.id}')" title="Editar" class="text-slate-400 hover:text-amber-800">✏️</button>
+                                <button onclick="deletePonto('${ponto.id}')" title="Excluir" class="text-slate-400 hover:text-red-600">🗑️</button>
+                            ` : ''}
                         </div>
                     </div>
 
@@ -823,9 +1082,23 @@ create policy "Acesso total publico" on public.pontos for all using (true) with 
         }
 
         function openAddModal(preSelectedLinhaId = null) {
-            document.getElementById('modalTitle').textContent = "Adicionar Novo Ponto Cantado";
+            const modalTitle = document.getElementById('modalTitle');
+            const btnSubmit = document.getElementById('btnSubmitForm');
+            const divAutoral = document.getElementById('divAutoralContainer');
+
             document.getElementById('pontoForm').reset();
             document.getElementById('editingId').value = "";
+            toggleAutoralRequirement();
+
+            if (isAdminLoggedIn) {
+                modalTitle.textContent = "Adicionar Novo Ponto Cantado";
+                btnSubmit.textContent = "Salvar Ponto";
+                divAutoral.classList.add('hidden'); // Oculta opção autoral no modo direto de admin
+            } else {
+                modalTitle.textContent = "Enviar Sugestão de Ponto";
+                btnSubmit.textContent = "Enviar Sugestão";
+                divAutoral.classList.remove('hidden');
+            }
 
             if (preSelectedLinhaId) {
                 document.getElementById('formLinha').value = preSelectedLinhaId;
@@ -839,10 +1112,15 @@ create policy "Acesso total publico" on public.pontos for all using (true) with 
         }
 
         function editPonto(id) {
+            if (!isAdminLoggedIn) return;
+
             const ponto = window.pointsState.find(p => p.id == id);
             if (!ponto) return;
 
             document.getElementById('modalTitle').textContent = "Editar Ponto Cantado";
+            document.getElementById('btnSubmitForm').textContent = "Salvar Alterações";
+            document.getElementById('divAutoralContainer').classList.add('hidden');
+
             document.getElementById('editingId').value = ponto.id;
             document.getElementById('formLinha').value = ponto.linhaId;
             document.getElementById('formToque').value = ponto.toque || 'Ijexá';
@@ -855,6 +1133,7 @@ create policy "Acesso total publico" on public.pontos for all using (true) with 
         }
 
         function deletePonto(id) {
+            if (!isAdminLoggedIn) return;
             pontoToDeleteId = id;
             document.getElementById('deleteModal').classList.remove('hidden');
         }
@@ -865,7 +1144,7 @@ create policy "Acesso total publico" on public.pontos for all using (true) with 
         }
 
         async function executeDeletePonto() {
-            if (!pontoToDeleteId) return;
+            if (!pontoToDeleteId || !isAdminLoggedIn) return;
 
             const id = pontoToDeleteId;
             window.pointsState = window.pointsState.filter(p => p.id != id);
@@ -890,7 +1169,7 @@ create policy "Acesso total publico" on public.pontos for all using (true) with 
         }
 
         function copySQLScript() {
-            const sqlText = `create table if not exists public.pontos (
+            const sqlText = `create table if not exists public.sugestao_ponto (
   id bigint generated by default as identity primary key,
   "linhaId" integer not null,
   toque text,
@@ -898,11 +1177,12 @@ create policy "Acesso total publico" on public.pontos for all using (true) with 
   letra text,
   autor text,
   link text,
+  autoral boolean default false,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
-alter table public.pontos enable row level security;
-create policy "Acesso total publico" on public.pontos for all using (true) with check (true);`;
+alter table public.sugestao_ponto enable row level security;
+create policy "Acesso total publico sugestoes" on public.sugestao_ponto for all using (true) with check (true);`;
 
             const dummy = document.createElement("textarea");
             document.body.appendChild(dummy);
