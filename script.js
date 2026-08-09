@@ -425,8 +425,7 @@ function getToqueBadgeColor(toque) {
         case 'nagô': return 'bg-emerald-100 text-emerald-900 border border-emerald-200';
         case 'barravento': return 'bg-red-100 text-red-900 border border-red-200';
         case 'angola': return 'bg-blue-100 text-blue-900 border border-blue-200';
-        case 'congo de ouro': return 'bg-purple-100 text-purple-900 border border-purple-200';
-        case 'cabula': return 'bg-orange-100 text-orange-900 border border-orange-200';
+        case 'congo': return 'bg-purple-100 text-purple-900 border border-purple-200';
         default: return 'bg-slate-200 text-slate-800';
     }
 }
