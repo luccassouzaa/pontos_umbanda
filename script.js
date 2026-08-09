@@ -235,6 +235,7 @@ const DEFAULT_POINTS = [
 ];
 
 window.pointsState = [];
+window.selectedLinhaId = null;
 let pontoToDeleteId = null;
 
 // Inicializador da Aplicação
@@ -282,25 +283,28 @@ function renderCatalog() {
     const summaryGrid = document.getElementById('summaryGrid');
     const totalBadge = document.getElementById('totalPointsBadge');
 
+    if (container) {
+        container.classList.add('is-changing');
+    }
+
     const searchTerm = (document.getElementById('searchInput').value || '').toLowerCase();
     const toqueFilter = document.getElementById('toqueFilter').value;
+    const selectedLinhaId = window.selectedLinhaId;
 
     container.innerHTML = '';
     summaryGrid.innerHTML = '';
 
+    const linhasParaExibir = LINHAS_UMBANDA.filter(linha => !selectedLinhaId || linha.id === selectedLinhaId);
     let totalCount = 0;
 
-    LINHAS_UMBANDA.forEach(linha => {
-        // Filtrar pontos dessa linha
+    linhasParaExibir.forEach(linha => {
         const pontosDaLinha = window.pointsState.filter(p => {
             if (p.linhaId !== linha.id) return false;
 
-            // Filtro de Toque
             if (toqueFilter && p.toque !== toqueFilter) return false;
 
-            // Filtro de Busca
             if (searchTerm) {
-                const inLetra = p.letra.toLowerCase().includes(searchTerm);
+                const inLetra = (p.letra || '').toLowerCase().includes(searchTerm);
                 const inTitulo = (p.titulo || '').toLowerCase().includes(searchTerm);
                 const inAutor = (p.autor || '').toLowerCase().includes(searchTerm);
                 const inToque = (p.toque || '').toLowerCase().includes(searchTerm);
@@ -313,25 +317,29 @@ function renderCatalog() {
 
         totalCount += pontosDaLinha.length;
 
-        // Adicionar ao Índice / Sumário
-        const summaryItem = document.createElement('div');
-        summaryItem.className = `flex justify-between items-center px-2 py-1 rounded ${pontosDaLinha.length > 0 ? 'bg-amber-100/60 font-semibold text-amber-950' : 'text-slate-400 font-normal'}`;
+        const summaryItem = document.createElement('button');
+        summaryItem.type = 'button';
+        const isActive = selectedLinhaId === linha.id;
+        summaryItem.className = `w-full flex justify-between items-center px-2 py-1 rounded text-left ${isActive ? 'bg-amber-200/90 font-semibold text-amber-950 ring-1 ring-amber-400' : (pontosDaLinha.length > 0 ? 'bg-amber-100/60 font-semibold text-amber-950' : 'text-slate-400 font-normal bg-slate-50')}`;
         summaryItem.innerHTML = `
             <span class="truncate">${linha.name}</span>
             <span class="text-[10px] ml-1 px-1.5 py-0.2 bg-white/80 rounded-full border border-amber-200">${pontosDaLinha.length}</span>
         `;
+        summaryItem.onclick = () => {
+            window.selectedLinhaId = isActive ? null : linha.id;
+            renderCatalog();
+        };
         summaryGrid.appendChild(summaryItem);
 
-        // Criar Card do Orixá/Linha na visualização de 2 colunas
         const card = document.createElement('div');
         card.className = "point-card";
 
         let pointsHTML = '';
         if (pontosDaLinha.length === 0) {
-            if (!searchTerm && !toqueFilter) {
+            if (!searchTerm && !toqueFilter && !selectedLinhaId) {
                 pointsHTML = `<p class="text-xs text-slate-400 italic mb-4">[Espaço reservado para inclusão de pontos]</p>`;
             } else {
-                return; // Oculta seções vazias na busca
+                return;
             }
         } else {
             pointsHTML = pontosDaLinha.map(p => renderSinglePontoHTML(p)).join('');
@@ -354,7 +362,7 @@ function renderCatalog() {
 
     totalBadge.textContent = `${totalCount} ponto${totalCount === 1 ? '' : 's'}`;
 
-    if (totalCount === 0 && (searchTerm || toqueFilter)) {
+    if (totalCount === 0 && (searchTerm || toqueFilter || selectedLinhaId)) {
         container.innerHTML = `
             <div class="col-span-2 text-center py-12 text-slate-400">
                 <p class="text-base font-medium">Nenhum ponto encontrado para o filtro aplicado.</p>
@@ -362,6 +370,12 @@ function renderCatalog() {
             </div>
         `;
     }
+
+    requestAnimationFrame(() => {
+        if (container) {
+            container.classList.remove('is-changing');
+        }
+    });
 }
 
 // Gerar HTML de um único ponto
@@ -604,6 +618,7 @@ function filterPoints() {
 }
 
 function resetFilters() {
+    window.selectedLinhaId = null;
     document.getElementById('searchInput').value = '';
     document.getElementById('toqueFilter').value = '';
     renderCatalog();
@@ -668,3 +683,7 @@ window.filterPoints = filterPoints;
 window.resetFilters = resetFilters;
 window.showToast = showToast;
 window.renderCatalog = renderCatalog;
+window.filterByLinha = function(linhaId) {
+    window.selectedLinhaId = linhaId;
+    renderCatalog();
+};

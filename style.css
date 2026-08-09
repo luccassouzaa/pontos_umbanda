@@ -7,6 +7,24 @@ h1, h2, h3, .brand-font {
     font-family: 'Cinzel', serif;
 }
 
+#summaryGrid button {
+    transition: all 0.35s ease;
+    transform: translateY(0);
+}
+
+#summaryGrid button:hover {
+    transform: translateY(-1px);
+}
+
+#pointsContainer {
+    transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+#pointsContainer.is-changing {
+    opacity: 0.7;
+    transform: translateY(2px);
+}
+
 /* Estilo de 2 colunas para impressão e visualização desktop */
 .columns-container {
     column-count: 2;
@@ -17,6 +35,18 @@ h1, h2, h3, .brand-font {
 .point-card {
     break-inside: avoid;
     margin-bottom: 1.5rem;
+    animation: fadeInCard 0.45s ease;
+}
+
+@keyframes fadeInCard {
+    from {
+        opacity: 0;
+        transform: translateY(3px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* Modal backdrop transition */
