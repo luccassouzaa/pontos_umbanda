@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Caderno de Pontos de Umbanda</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+        h1, h2, h3, .brand-font {
+            font-family: 'Cinzel', serif;
+        }
+        
+        /* Estilo de 2 colunas para impressão e visualização desktop */
+        .columns-container {
+            column-count: 2;
+            column-gap: 2.5rem;
+            column-rule: 1px solid #e2e8f0;
+        }
+
+        .point-card {
+            break-inside: avoid;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Modal backdrop transition */
+        .modal-backdrop {
+            background-color: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(4px);
+        }
+
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            body {
+                background-color: #ffffff;
+                color: #000000;
+                padding: 0 !important;
+            }
+            .page-container {
+                box-shadow: none !important;
+                padding: 0 !important;
+                max-width: 100% !important;
+                border: none !important;
+            }
+            .columns-container {
+                column-count: 2 !important;
+                column-gap: 2rem !important;
+            }
+            .point-card {
+                page-break-inside: avoid;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .columns-container {
+                column-count: 1;
+            }
+        }
+    </style>
+</head>
+<body class="py-6 px-4 sm:px-6 lg:px-8 min-h-screen">
+
+    <!-- Actions Bar / Cabeçalho de Controle -->
+    <header class="max-w-5xl mx-auto mb-6 bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-200 no-print flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4">
+        <div>
+            <h1 class="text-xl sm:text-2xl font-bold text-amber-900 tracking-wide">Coletânea de Pontos Cantados</h1>
+            <p class="text-xs text-slate-500 mt-0.5">Caderno interativo com busca, novos pontos e impressão em 2 colunas</p>
+        </div>
+        
+        <div class="flex flex-wrap gap-2.5 items-center">
+            <!-- Botão Adicionar Ponto -->
+            <button onclick="openAddModal()" class="px-4 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white font-medium text-sm rounded-xl shadow-sm transition flex items-center justify-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+                <span>Adicionar Ponto</span>
+            </button>
+
+            <!-- Botão Exportar / Backup GitHub -->
+            <button onclick="openExportModal()" class="px-3 py-2.5 bg-slate-700 hover:bg-slate-800 text-white font-medium text-sm rounded-xl shadow-sm transition flex items-center justify-center gap-2" title="Exportar dados para o GitHub">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                <span class="hidden sm:inline">Exportar / Backup</span>
+            </button>
+
+            <!-- Botão Imprimir / Salvar PDF -->
+            <button onclick="window.print()" class="px-4 py-2.5 bg-amber-800 hover:bg-amber-900 text-white font-medium text-sm rounded-xl shadow-sm transition flex items-center justify-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                <span>Imprimir / PDF</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Indicador de Sincronização em Nuvem (Para GitHub Pages / Multi-dispositivo) -->
+    <div id="syncStatus" class="max-w-5xl mx-auto mb-4 px-4 py-2 bg-amber-50 rounded-xl border border-amber-200/80 text-xs text-amber-900 flex justify-between items-center no-print hidden">
+        <span class="flex items-center gap-2">
+            <span id="syncDot" class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span id="syncText">Sincronização online ativa (as alterações ficam salvas na nuvem)</span>
+        </span>
+        <button onclick="openExportModal()" class="font-medium underline hover:text-amber-950">Baixar cópia de segurança</button>
+    </div>
+
+    <!-- Filtros e Busca (Apenas na Tela) -->
+    <section class="max-w-5xl mx-auto mb-6 bg-white p-4 rounded-xl shadow-sm border border-slate-200 no-print flex flex-col sm:flex-row gap-3">
+        <div class="relative flex-1">
+            <svg class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            <input type="text" id="searchInput" oninput="filterPoints()" placeholder="Buscar letra, orixá ou palavra-chave..." class="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none">
+        </div>
+        
+        <select id="toqueFilter" onchange="filterPoints()" class="py-2 px-3 border border-slate-300 rounded-lg text-sm bg-white text-slate-700 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none">
+            <option value="">Todos os Toques</option>
+            <option value="Ijexá">Ijexá</option>
+            <option value="Nagô">Nagô</option>
+            <option value="Barravento">Barravento</option>
+            <option value="Angola">Angola</option>
+            <option value="Congo de Ouro">Congo de Ouro</option>
+            <option value="Cabula">Cabula</option>
+        </select>
+
+        <button onclick="resetFilters()" class="px-3 py-2 text-xs font-medium text-slate-500 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 rounded-lg transition">
+            Limpar Filtros
+        </button>
+    </section>
+
+    <!-- Documento Principal -->
+    <main class="max-w-5xl mx-auto bg-white p-6 sm:p-10 md:p-12 rounded-2xl shadow-md border border-slate-200 page-container">
+        
+        <!-- Capa / Cabeçalho Principal -->
+        <div class="border-b-2 border-amber-800/30 pb-6 mb-8 text-center">
+            <h1 class="text-3xl sm:text-4xl font-bold text-amber-900 tracking-wide uppercase">Pontos Cantados de Umbanda</h1>
+            <p class="text-xs sm:text-sm text-slate-500 mt-2 tracking-widest uppercase">Linhagem • Orixás • Entidades • Curimba</p>
+        </div>
+
+        <!-- Sumário / Índice em Colunas -->
+        <section class="mb-10 bg-amber-50/60 p-5 rounded-xl border border-amber-100/80 no-print">
+            <div class="flex justify-between items-center mb-3 border-b border-amber-200 pb-2">
+                <h2 class="text-base font-bold text-amber-900">Índice da Curimba (21 Linhas)</h2>
+                <span id="totalPointsBadge" class="text-xs font-semibold bg-amber-200/80 text-amber-900 px-2.5 py-0.5 rounded-full">0 pontos</span>
+            </div>
+            <div id="summaryGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 text-xs text-slate-700 font-medium">
+                <!-- Preenchido dinamicamente -->
+            </div>
+        </section>
+
+        <!-- Container do Corpo dos Pontos (2 Colunas) -->
+        <div id="pointsContainer" class="columns-container text-slate-800 text-sm leading-relaxed">
+            <!-- Pontos renderizados via JavaScript -->
+        </div>
+
+        <!-- Rodapé do Documento -->
+        <footer class="mt-12 pt-4 border-t border-slate-200 text-center text-xs text-slate-400 no-print">
+            Saravá a Umbanda • Caderno de Pontos Cantados da Curimba
+        </footer>
+
+    </main>
+
+    <!-- Notification Toast Container -->
+    <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 no-print pointer-events-none"></div>
+
+    <!-- MODAL DE CONFIRMAÇÃO DE EXCLUSÃO -->
+    <div id="deleteModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 modal-backdrop no-print">
+        <div class="bg-white w-full max-w-sm rounded-2xl shadow-2xl border border-slate-200 p-6 text-center space-y-4">
+            <div class="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto text-xl">⚠️</div>
+            <h3 class="text-base font-bold text-slate-800">Confirmar Exclusão</h3>
+            <p class="text-xs text-slate-600">Tem certeza de que deseja excluir este ponto cantado? Esta ação não poderá ser desfeita.</p>
+            <div class="flex justify-center gap-3 pt-2">
+                <button onclick="closeDeleteModal()" class="px-4 py-2 border border-slate-300 text-slate-600 hover:bg-slate-100 rounded-xl text-xs font-medium transition">Cancelar</button>
+                <button id="confirmDeleteBtn" onclick="executeDeletePonto()" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-medium shadow-sm transition">Excluir Ponto</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE EXPORTAR E IMPORTAR (GITHUB BACKUP) -->
+    <div id="exportModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 modal-backdrop no-print">
+        <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
+            <div class="bg-slate-800 px-6 py-4 flex justify-between items-center text-white">
+                <h3 class="text-base font-bold brand-font">Backup & Exportação para GitHub</h3>
+                <button onclick="closeExportModal()" class="text-slate-400 hover:text-white transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div class="p-6 space-y-4 text-xs text-slate-700">
+                <p>Ao adicionar novos pontos, você pode exportá-los em formato JSON para salvar no repositório do seu GitHub ou importar um arquivo prévio.</p>
+                
+                <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+                    <h4 class="font-bold text-slate-800">1. Baixar Arquivo JSON de Pontos</h4>
+                    <p class="text-[11px] text-slate-500">Faça o download do arquivo com todos os pontos atuais cadastrados.</p>
+                    <button onclick="downloadJSONBackup()" class="w-full py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg font-medium transition flex items-center justify-center gap-2">
+                        <span>📥 Baixar `pontos_umbanda.json`</span>
+                    </button>
+                </div>
+
+                <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+                    <h4 class="font-bold text-slate-800">2. Copiar Array de Dados (Para colar no Código)</h4>
+                    <p class="text-[11px] text-slate-500">Copia os pontos para a área de transferência para substituir na variável `DEFAULT_POINTS` no código.</p>
+                    <button onclick="copyPointsToClipboard()" class="w-full py-2 bg-slate-700 hover:bg-slate-800 text-white rounded-lg font-medium transition flex items-center justify-center gap-2">
+                        <span>📋 Copiar Dados da Curimba</span>
+                    </button>
+                </div>
+
+                <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+                    <h4 class="font-bold text-slate-800">3. Importar Backup em JSON</h4>
+                    <input type="file" id="importFileInput" accept=".json" onchange="importJSONBackup(event)" class="w-full text-xs text-slate-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-amber-100 file:text-amber-900 hover:file:bg-amber-200">
+                </div>
+            </div>
+            <div class="px-6 py-3 bg-slate-50 border-t border-slate-100 text-right">
+                <button onclick="closeExportModal()" class="px-4 py-2 border border-slate-300 text-slate-600 hover:bg-slate-200 rounded-xl font-medium transition">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE ADICIONAR / EDITAR PONTO -->
+    <div id="pontoModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 modal-backdrop no-print">
+        <div class="bg-white w-full max-w-xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden transform transition-all flex flex-col max-h-[90vh]">
+            
+            <!-- Modal Header -->
+            <div class="bg-amber-900 px-6 py-4 flex justify-between items-center text-white">
+                <h3 id="modalTitle" class="text-lg font-bold brand-font">Adicionar Novo Ponto Cantado</h3>
+                <button onclick="closeAddModal()" class="text-amber-200 hover:text-white transition">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+
+            <!-- Modal Form -->
+            <form id="pontoForm" onsubmit="handleFormSubmit(event)" class="p-6 overflow-y-auto space-y-4 text-slate-800">
+                <input type="hidden" id="editingId" value="">
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <!-- Input -> Linha (Lista de índice da curimba) -->
+                    <div>
+                        <label for="formLinha" class="block text-xs font-semibold text-slate-700 mb-1">
+                            Linha / Orixá <span class="text-red-500">*</span>
+                        </label>
+                        <select id="formLinha" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none bg-white">
+                            <option value="">Selecione a Linha...</option>
+                            <!-- Opções das 21 linhas geradas via JS -->
+                        </select>
+                    </div>
+
+                    <!-- Input -> Toque (ijexa, nago, barravento, angola, congo, etc.) -->
+                    <div>
+                        <label for="formToque" class="block text-xs font-semibold text-slate-700 mb-1">
+                            Toque / Ritmo <span class="text-red-500">*</span>
+                        </label>
+                        <select id="formToque" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none bg-white">
+                            <option value="Ijexá">Ijexá</option>
+                            <option value="Nagô">Nagô</option>
+                            <option value="Barravento">Barravento</option>
+                            <option value="Angola">Angola</option>
+                            <option value="Congo de Ouro">Congo de Ouro</option>
+                            <option value="Cabula">Cabula</option>
+                            <option value="Vassi">Vassi</option>
+                            <option value="Samba Caboclo">Samba Caboclo</option>
+                            <option value="Chamada">Chamada / Coroa</option>
+                            <option value="Outro">Outro / Livre</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Input Extra -> Título / Nome do Ponto (Opcional) -->
+                <div>
+                    <label for="formTitulo" class="block text-xs font-semibold text-slate-700 mb-1">
+                        Título ou Identificador <span class="text-slate-400 font-normal">(Opcional)</span>
+                    </label>
+                    <input type="text" id="formTitulo" placeholder="Ex: Pombinho Branco Mensageiro" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none">
+                </div>
+
+                <!-- Input -> Ponto por Escrito -->
+                <div>
+                    <label for="formLetra" class="block text-xs font-semibold text-slate-700 mb-1">
+                        Ponto por Escrito (Letra) <span class="text-red-500">*</span>
+                    </label>
+                    <textarea id="formLetra" required rows="6" placeholder="Escreva a letra do ponto aqui...&#10;Exemplo:&#10;Eu vi meu pai Oxalá, sentado na pedra olhando pro mar (bis)&#10;E lá no céu um sol fecundo brilhava..." class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none font-sans"></textarea>
+                    <p class="text-[11px] text-slate-400 mt-1">Dica: Utilize "(bis)" ou repetições na mesma linha para melhor visualização.</p>
+                </div>
+
+                <!-- Input -> Autor (Opcional) -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label for="formAutor" class="block text-xs font-semibold text-slate-700 mb-1">
+                            Autor / Compositor <span class="text-slate-400 font-normal">(Opcional)</span>
+                        </label>
+                        <input type="text" id="formAutor" placeholder="Ex: Domínio Público / Pai Ogum" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none">
+                    </div>
+
+                    <!-- Input Extra -> Link de Vídeo/Áudio (Opcional) -->
+                    <div>
+                        <label for="formLink" class="block text-xs font-semibold text-slate-700 mb-1">
+                            Link de Áudio / YouTube <span class="text-slate-400 font-normal">(Opcional)</span>
+                        </label>
+                        <input type="url" id="formLink" placeholder="https://youtube.com/..." class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none">
+                    </div>
+                </div>
+
+                <!-- Modal Actions -->
+                <div class="pt-4 border-t border-slate-100 flex justify-end gap-3">
+                    <button type="button" onclick="closeAddModal()" class="px-4 py-2 border border-slate-300 text-slate-600 hover:bg-slate-100 rounded-xl text-sm font-medium transition">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="px-5 py-2 bg-amber-800 hover:bg-amber-900 text-white rounded-xl text-sm font-medium shadow-sm transition">
+                        Salvar Ponto
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Configuração do Firebase / Nuvem para sincronização multi-dispositivo
+        let db = null;
+        let auth = null;
+        let pointsCollectionRef = null;
+        let pendingPontoToDelete = null;
+
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'umbanda-pontos-app';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        // Inicializar persistência em nuvem se disponível no ambiente
+        async function initCloudSync() {
+            if (!firebaseConfig) {
+                console.log("Modo armazenamento local ativo.");
+                return;
+            }
+
+            try {
+                const app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+
+                if (!auth.currentUser) return;
+
+                // Path de dados públicos segundo regras do ambiente
+                pointsCollectionRef = collection(db, 'artifacts', appId, 'public', 'data', 'pontos');
+
+                // Atualização em tempo real via snapshot
+                onSnapshot(pointsCollectionRef, (snapshot) => {
+                    if (!snapshot.empty) {
+                        const cloudPoints = [];
+                        snapshot.forEach((docSnap) => {
+                            cloudPoints.push(docSnap.data());
+                        });
+                        if (cloudPoints.length > 0) {
+                            window.pointsState = cloudPoints;
+                            window.savePointsStateLocally();
+                            window.renderCatalog();
+                        }
+                    } else if (window.pointsState && window.pointsState.length > 0) {
+                        // Se a nuvem estiver vazia, faz upload do estado inicial
+                        window.pointsState.forEach(ponto => {
+                            setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'pontos', ponto.id), ponto);
+                        });
+                    }
+                    
+                    const syncElem = document.getElementById('syncStatus');
+                    if (syncElem) syncElem.classList.remove('hidden');
+                }, (err) => {
+                    console.warn("Sincronização em nuvem indisponível, utilizando dados locais.", err);
+                });
+
+            } catch (e) {
+                console.warn("Erro ao conectar com serviço de nuvem:", e);
+            }
+        }
+
+        // Funções globais de nuvem expostas no window
+        window.cloudSavePonto = async function(ponto) {
+            if (!db || !auth?.currentUser) return;
+            try {
+                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'pontos', ponto.id), ponto);
+            } catch (e) {
+                console.error("Erro ao salvar no banco em nuvem:", e);
+            }
+        };
+
+        window.cloudDeletePonto = async function(id) {
+            if (!db || !auth?.currentUser) return;
+            try {
+                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'pontos', id));
+            } catch (e) {
+                console.error("Erro ao remover do banco em nuvem:", e);
+            }
+        };
+
+        window.addEventListener('DOMContentLoaded', () => {
+            initCloudSync();
+        });
+    </script>
+
+    <script>
+        // Lista oficial das 21 Linhas da Curimba
+        const LINHAS_UMBANDA = [
+            { id: 1, name: "1. Oxalá" },
+            { id: 2, name: "2. Logunan" },
+            { id: 3, name: "3. Oxum" },
+            { id: 4, name: "4. Oxumarê" },
+            { id: 5, name: "5. Oxossi" },
+            { id: 6, name: "6. Obá" },
+            { id: 7, name: "7. Obaluaê" },
+            { id: 8, name: "8. Nanã" },
+            { id: 9, name: "9. Ogum" },
+            { id: 10, name: "10. Iansã" },
+            { id: 11, name: "11. Omolu" },
+            { id: 12, name: "12. Iemanjá" },
+            { id: 13, name: "13. Xangô" },
+            { id: 14, name: "14. Oroina / Egunitá" },
+            { id: 15, name: "15. Preto(a) Velho(a)" },
+            { id: 16, name: "16. Caboclos" },
+            { id: 17, name: "17. Erês" },
+            { id: 18, name: "18. Baiano" },
+            { id: 19, name: "19. Boiadeiro" },
+            { id: 20, name: "20. Marinheiro" },
+            { id: 21, name: "21. Esquerda (Exu, Pomba Gira e Exu Mirim)" }
+        ];
+
+        // Dados Iniciais do Acervo
+        const DEFAULT_POINTS = [
+            // 1. Oxalá
+            {
+                id: "oxala_1",
+                linhaId: 1,
+                toque: "Ijexá",
+                titulo: "",
+                letra: "Eu (vi) meu pai Oxalá, sentado na pedra olhando pro mar (bis)\nE lá no céu, um sol fecundo brilhava\ne seu rosto reluzia\no símbolo dos anjos de deus\nA ordem de seus orixás\nE gloria da virgem de maria\nO meu pai oxalá (bis)\nEle e rei no céu, ele manda na terra, ele manda no mar\nEnviai as correntes divinas\nCom seus mensageiros, para nos ajudar",
+                autor: "",
+                link: ""
+            },
+            {
+                id: "oxala_2",
+                linhaId: 1,
+                toque: "Ijexá",
+                titulo: "",
+                letra: "Di(vi)no é viver no céu, divino é viver no mar\nDivino é viver cantando no mundo, lindo, de oxalá\nOxalá meu pai, venha, nos ajudar\nVenha, nos dar as forças meu pai\nE abençoes esse conga\nDivino é poder viver, divino é poder cantar\nDivino é viver cantando no mundo, lindo, de oxalá\nOxalá meu pai, venha, nos ajudar\nVenha, nos dar as forças meu pai\nE abençoes esse conga",
+                autor: "",
+                link: ""
+            },
+            {
+                id: "oxala_3",
+                linhaId: 1,
+                toque: "Ijexá",
+                titulo: "",
+                letra: "Lá no infi(ni)to uma estrela desceu, iluminando os caminhos do bem (bis)\nFoi quando o céu se abriu, clareou os campos de Belém (bis)\nAonde jesus nasceu, filho da virgem maria\nÉ ele o nosso pai, que nós chamamos de messias",
+                autor: "",
+                link: ""
+            },
+            {
+                id: "oxala_4",
+                linhaId: 1,
+                toque: "Ijexá",
+                titulo: "",
+                letra: "Cru(ze)iro divino, cruzeiro madeiro\nAs forças divinas, de um deus verdadeiro\nDe lá vem vindo, de lá vem só\nDe lá vem vindo, a força maior",
+                autor: "",
+                link: ""
+            },
+            {
+                id: "oxala_5",
+                linhaId: 1,
+                toque: "Ijexá",
+                titulo: "Pombinho Branco",
+                letra: "(Pom)binho branco, mensageiro de oxalá\nLeve essa mensagem, de todo coração até jesus\nDiga, que somos, soldados de aruanda\nTrabalhamos na umbanda, semeando a sua luz",
+                autor: "",
+                link: ""
+            },
+            {
+                id: "oxala_6",
+                linhaId: 1,
+                toque: "Angola",
+                titulo: "",
+                letra: "Olhe pro (céu), e agradeça ao senhor\nAgradeça ao senhor\nPor ter saúde, por ter paz e ter amor (bis)\nOxalá meu pai, oxalá meu pai (bis)\nNunca deixa nada, nesse mundo me faltar",
+                autor: "",
+                link: ""
+            },
+
+            // 2. Logunan
+            {
+                id: "logunan_1",
+                linhaId: 2,
+                toque: "Angola",
+                titulo: "Coroa",
+                letra: "Resplande(ce)u, iluminou\nLuz cristalina, minha fé cristalizou\nA Mãe Oya é a dona do tempo\nGirou seu tempo para nos guiar\nA Mãe Oyá é a dona do tempo\nGira no templo, vem nos saravá.",
+                autor: "",
+                link: ""
+            },
+            {
+                id: "logunan_2",
+                linhaId: 2,
+                toque: "Angola",
+                titulo: "Chamada",
+                letra: "O (tem)po virou, lá no fim do horizonte\nFoi um lindo clarão, Logunan quem chegou\nEla vem com sua espada\nAcompanhada das guerreiras\nVem fazer cumprir Logunan\nAs leis de oxalá",
+                autor: "",
+                link: ""
+            },
+
+            // 3. Oxum
+            {
+                id: "oxum_1",
+                linhaId: 3,
+                toque: "Ijexá",
+                titulo: "",
+                letra: "(Ê) Emoriô, Ê Emoriô, Emoriô paô",
+                autor: "",
+                link: ""
+            },
+            {
+                id: "oxum_2",
+                linhaId: 3,
+                toque: "Ijexá",
+                titulo: "Cachoeiras de Oxum",
+                letra: "Nas cacho(eiras) da mamãe oxum\nCorrem águas cristalinas, nos pés de pai Olorum\nPai Olorum, sentado as cachoeiras\nDas águas cristalinas que jesus abençoou\nEu vou pedir a permissão à oxalá\nPara banhar nas cachoeiras para todo mal levar",
+                autor: "",
+                link: ""
+            },
+
+            // 5. Oxossi
+            {
+                id: "oxossi_1",
+                linhaId: 5,
+                toque: "Barravento",
+                titulo: "Oke Arô Caçador",
+                letra: "Vamos to(car), vamos bater tambor\nEstá na hora de chamar o caçador\nOdé Odé Odé o meu pai, oke arô (bis)\n\nVem (ca)çar da aruanda, oi coroa\nOxossi é caçador\n\nOxossi deu, Oxossi dá\nOxossi deu, para quem sabe trabalhar\n\nOxossi é bom cavaleiro\nEle é faceiro até no andar\nMas quem me dera ser Oxossi\nPara correr e não poder parar",
+                autor: "",
+                link: ""
+            },
+
+            // 6. Obá
+            {
+                id: "oba_1",
+                linhaId: 6,
+                toque: "Barravento",
+                titulo: "Mãe Obá do Conhecimento",
+                letra: "Ela traz conhecimento\nVem me iluminar\nClareia meus pensamentos\nÔ minha mãe obá\n\nEla é luz da verdade\nVem me iluminar\nCom sua sabedoria\nÔ minha mãe obá\n\nIrradia o tempo todo\nE sabe ensinar\nDona do conhecimento\nÔ minha mãe obá",
+                autor: "",
+                link: ""
+            }
+        ];
+
+        window.pointsState = [];
+        let pontoToDeleteId = null;
+
+        // Inicializador da Aplicação
+        window.addEventListener('DOMContentLoaded', () => {
+            loadPointsState();
+            populateLinhasSelects();
+            renderCatalog();
+        });
+
+        // Carregar do localStorage ou usar padrão
+        function loadPointsState() {
+            const saved = localStorage.getItem('umbanda_pontos_db');
+            if (saved) {
+                try {
+                    window.pointsState = JSON.parse(saved);
+                } catch (e) {
+                    window.pointsState = [...DEFAULT_POINTS];
+                }
+            } else {
+                window.pointsState = [...DEFAULT_POINTS];
+                savePointsStateLocally();
+            }
+        }
+
+        window.savePointsStateLocally = function() {
+            localStorage.setItem('umbanda_pontos_db', JSON.stringify(window.pointsState));
+        };
+
+        // Preencher os selects com as 21 linhas
+        function populateLinhasSelects() {
+            const formSelect = document.getElementById('formLinha');
+            formSelect.innerHTML = '<option value="">Selecione a Linha...</option>';
+            
+            LINHAS_UMBANDA.forEach(linha => {
+                const opt = document.createElement('option');
+                opt.value = linha.id;
+                opt.textContent = linha.name;
+                formSelect.appendChild(opt);
+            });
+        }
+
+        // Renderizar todo o catálogo na tela
+        function renderCatalog() {
+            const container = document.getElementById('pointsContainer');
+            const summaryGrid = document.getElementById('summaryGrid');
+            const totalBadge = document.getElementById('totalPointsBadge');
+
+            const searchTerm = (document.getElementById('searchInput').value || '').toLowerCase();
+            const toqueFilter = document.getElementById('toqueFilter').value;
+
+            container.innerHTML = '';
+            summaryGrid.innerHTML = '';
+
+            let totalCount = 0;
+
+            LINHAS_UMBANDA.forEach(linha => {
+                // Filtrar pontos dessa linha
+                const pontosDaLinha = window.pointsState.filter(p => {
+                    if (p.linhaId !== linha.id) return false;
+                    
+                    // Filtro de Toque
+                    if (toqueFilter && p.toque !== toqueFilter) return false;
+
+                    // Filtro de Busca
+                    if (searchTerm) {
+                        const inLetra = p.letra.toLowerCase().includes(searchTerm);
+                        const inTitulo = (p.titulo || '').toLowerCase().includes(searchTerm);
+                        const inAutor = (p.autor || '').toLowerCase().includes(searchTerm);
+                        const inToque = (p.toque || '').toLowerCase().includes(searchTerm);
+                        const inLinha = linha.name.toLowerCase().includes(searchTerm);
+                        return inLetra || inTitulo || inAutor || inToque || inLinha;
+                    }
+
+                    return true;
+                });
+
+                totalCount += pontosDaLinha.length;
+
+                // Adicionar ao Índice / Sumário
+                const summaryItem = document.createElement('div');
+                summaryItem.className = `flex justify-between items-center px-2 py-1 rounded ${pontosDaLinha.length > 0 ? 'bg-amber-100/60 font-semibold text-amber-950' : 'text-slate-400 font-normal'}`;
+                summaryItem.innerHTML = `
+                    <span class="truncate">${linha.name}</span>
+                    <span class="text-[10px] ml-1 px-1.5 py-0.2 bg-white/80 rounded-full border border-amber-200">${pontosDaLinha.length}</span>
+                `;
+                summaryGrid.appendChild(summaryItem);
+
+                // Criar Card do Orixá/Linha na visualização de 2 colunas
+                const card = document.createElement('div');
+                card.className = "point-card";
+
+                let pointsHTML = '';
+                if (pontosDaLinha.length === 0) {
+                    if (!searchTerm && !toqueFilter) {
+                        pointsHTML = `<p class="text-xs text-slate-400 italic mb-4">[Espaço reservado para inclusão de pontos]</p>`;
+                    } else {
+                        return; // Oculta seções vazias na busca
+                    }
+                } else {
+                    pointsHTML = pontosDaLinha.map(p => renderSinglePontoHTML(p)).join('');
+                }
+
+                card.innerHTML = `
+                    <h2 class="text-base sm:text-lg font-bold text-amber-900 border-b-2 border-amber-800/40 pb-1 mb-3 brand-font flex justify-between items-center">
+                        <span>${linha.name}</span>
+                        <button onclick="openAddModal(${linha.id})" class="no-print text-xs font-sans text-emerald-700 hover:text-emerald-900 font-normal hover:underline flex items-center gap-0.5">
+                            + adicionar
+                        </button>
+                    </h2>
+                    <div class="space-y-4">
+                        ${pointsHTML}
+                    </div>
+                `;
+
+                container.appendChild(card);
+            });
+
+            totalBadge.textContent = `${totalCount} ponto${totalCount === 1 ? '' : 's'}`;
+
+            if (totalCount === 0 && (searchTerm || toqueFilter)) {
+                container.innerHTML = `
+                    <div class="col-span-2 text-center py-12 text-slate-400">
+                        <p class="text-base font-medium">Nenhum ponto encontrado para o filtro aplicado.</p>
+                        <button onclick="resetFilters()" class="mt-2 text-xs text-amber-800 underline">Limpar filtros de busca</button>
+                    </div>
+                `;
+            }
+        }
+
+        // Gerar HTML de um único ponto
+        function renderSinglePontoHTML(ponto) {
+            const badgeColor = getToqueBadgeColor(ponto.toque);
+            const formattedLetra = escapeAndFormatLetra(ponto.letra);
+
+            return `
+                <div class="group relative bg-slate-50/50 hover:bg-slate-50 p-3 rounded-lg border border-slate-100 transition">
+                    
+                    <!-- Barra de Informações Superior -->
+                    <div class="flex flex-wrap items-center justify-between gap-1 mb-1.5">
+                        <div class="flex items-center gap-1.5 flex-wrap">
+                            <span class="inline-block text-[10px] font-bold tracking-wider ${badgeColor} px-2 py-0.5 rounded uppercase">
+                                (${ponto.toque || 'Ijexá'})
+                            </span>
+                            ${ponto.titulo ? `<span class="text-xs font-semibold text-slate-700">· ${escapeHTML(ponto.titulo)}</span>` : ''}
+                        </div>
+
+                        <!-- Botões de Ação na Tela (Ocultos na Impressão) -->
+                        <div class="no-print opacity-0 group-hover:opacity-100 transition flex items-center gap-2 text-xs">
+                            ${ponto.link ? `<a href="${escapeHTML(ponto.link)}" target="_blank" title="Ouvir no YouTube" class="text-red-600 hover:text-red-800">
+                                <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+                            </a>` : ''}
+                            <button onclick="editPonto('${ponto.id}')" title="Editar" class="text-slate-400 hover:text-amber-800">
+                                ✏️
+                            </button>
+                            <button onclick="deletePonto('${ponto.id}')" title="Excluir" class="text-slate-400 hover:text-red-600">
+                                🗑️
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Letra do Ponto -->
+                    <p class="whitespace-pre-line italic text-slate-800 text-xs sm:text-sm leading-relaxed">${formattedLetra}</p>
+
+                    <!-- Autor se existir -->
+                    ${ponto.autor ? `<p class="mt-1.5 text-[10px] text-slate-400 font-medium tracking-wide">Autor: ${escapeHTML(ponto.autor)}</p>` : ''}
+                </div>
+            `;
+        }
+
+        // Formatação de cores dos toques
+        function getToqueBadgeColor(toque) {
+            switch ((toque || '').toLowerCase()) {
+                case 'ijexá': return 'bg-amber-100 text-amber-900 border border-amber-200';
+                case 'nagô': return 'bg-emerald-100 text-emerald-900 border border-emerald-200';
+                case 'barravento': return 'bg-red-100 text-red-900 border border-red-200';
+                case 'angola': return 'bg-blue-100 text-blue-900 border border-blue-200';
+                case 'congo de ouro': return 'bg-purple-100 text-purple-900 border border-purple-200';
+                case 'cabula': return 'bg-orange-100 text-orange-900 border border-orange-200';
+                default: return 'bg-slate-200 text-slate-800';
+            }
+        }
+
+        // Abrir Modal de Adicionar
+        function openAddModal(preSelectedLinhaId = null) {
+            document.getElementById('modalTitle').textContent = "Adicionar Novo Ponto Cantado";
+            document.getElementById('pontoForm').reset();
+            document.getElementById('editingId').value = "";
+
+            if (preSelectedLinhaId) {
+                document.getElementById('formLinha').value = preSelectedLinhaId;
+            }
+
+            document.getElementById('pontoModal').classList.remove('hidden');
+        }
+
+        // Fechar Modal
+        function closeAddModal() {
+            document.getElementById('pontoModal').classList.add('hidden');
+        }
+
+        // Submeter formulário (Criar ou Editar)
+        function handleFormSubmit(event) {
+            event.preventDefault();
+
+            const editingId = document.getElementById('editingId').value;
+            const linhaId = parseInt(document.getElementById('formLinha').value, 10);
+            const toque = document.getElementById('formToque').value;
+            const titulo = document.getElementById('formTitulo').value.trim();
+            const letra = document.getElementById('formLetra').value.trim();
+            const autor = document.getElementById('formAutor').value.trim();
+            const link = document.getElementById('formLink').value.trim();
+
+            if (!linhaId || !toque || !letra) {
+                showToast("Por favor, preencha todos os campos obrigatórios (*)", "error");
+                return;
+            }
+
+            let pontoToSave = null;
+
+            if (editingId) {
+                // Atualizar existente
+                const index = window.pointsState.findIndex(p => p.id === editingId);
+                if (index !== -1) {
+                    pontoToSave = {
+                        ...window.pointsState[index],
+                        linhaId,
+                        toque,
+                        titulo,
+                        letra,
+                        autor,
+                        link
+                    };
+                    window.pointsState[index] = pontoToSave;
+                }
+            } else {
+                // Criar novo
+                pontoToSave = {
+                    id: "ponto_" + Date.now(),
+                    linhaId,
+                    toque,
+                    titulo,
+                    letra,
+                    autor,
+                    link
+                };
+                window.pointsState.push(pontoToSave);
+            }
+
+            savePointsStateLocally();
+            if (window.cloudSavePonto && pontoToSave) {
+                window.cloudSavePonto(pontoToSave);
+            }
+
+            renderCatalog();
+            closeAddModal();
+            showToast("Ponto salvo com sucesso!", "success");
+        }
+
+        // Editar Ponto Existente
+        function editPonto(id) {
+            const ponto = window.pointsState.find(p => p.id === id);
+            if (!ponto) return;
+
+            document.getElementById('modalTitle').textContent = "Editar Ponto Cantado";
+            document.getElementById('editingId').value = ponto.id;
+            document.getElementById('formLinha').value = ponto.linhaId;
+            document.getElementById('formToque').value = ponto.toque || 'Ijexá';
+            document.getElementById('formTitulo').value = ponto.titulo || '';
+            document.getElementById('formLetra').value = ponto.letra || '';
+            document.getElementById('formAutor').value = ponto.autor || '';
+            document.getElementById('formLink').value = ponto.link || '';
+
+            document.getElementById('pontoModal').classList.remove('hidden');
+        }
+
+        // Excluir Ponto (Via Modal de Confirmação Customizado)
+        function deletePonto(id) {
+            pontoToDeleteId = id;
+            document.getElementById('deleteModal').classList.remove('hidden');
+        }
+
+        function closeDeleteModal() {
+            pontoToDeleteId = null;
+            document.getElementById('deleteModal').classList.add('hidden');
+        }
+
+        function executeDeletePonto() {
+            if (!pontoToDeleteId) return;
+
+            const id = pontoToDeleteId;
+            window.pointsState = window.pointsState.filter(p => p.id !== id);
+            savePointsStateLocally();
+
+            if (window.cloudDeletePonto) {
+                window.cloudDeletePonto(id);
+            }
+
+            renderCatalog();
+            closeDeleteModal();
+            showToast("Ponto removido com sucesso.", "info");
+        }
+
+        // EXPORTAÇÃO E BACKUP PARA GITHUB
+        function openExportModal() {
+            document.getElementById('exportModal').classList.remove('hidden');
+        }
+
+        function closeExportModal() {
+            document.getElementById('exportModal').classList.add('hidden');
+        }
+
+        function downloadJSONBackup() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(window.pointsState, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", "pontos_umbanda.json");
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+            showToast("Backup baixado com sucesso!", "success");
+        }
+
+        function copyPointsToClipboard() {
+            const jsonText = JSON.stringify(window.pointsState, null, 2);
+            const dummy = document.createElement("textarea");
+            document.body.appendChild(dummy);
+            dummy.value = jsonText;
+            dummy.select();
+            document.execCommand("copy");
+            document.body.removeChild(dummy);
+            showToast("Dados dos pontos copiados para a área de transferência!", "success");
+        }
+
+        function importJSONBackup(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    if (Array.isArray(importedData)) {
+                        window.pointsState = importedData;
+                        savePointsStateLocally();
+                        
+                        // Sincronizar importação com a nuvem se disponível
+                        if (window.cloudSavePonto) {
+                            importedData.forEach(ponto => window.cloudSavePonto(ponto));
+                        }
+
+                        renderCatalog();
+                        closeExportModal();
+                        showToast("Dados importados com sucesso!", "success");
+                    } else {
+                        showToast("O arquivo JSON deve conter uma lista válida de pontos.", "error");
+                    }
+                } catch (err) {
+                    showToast("Erro ao ler arquivo JSON de backup.", "error");
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // Filtros e Utilidades
+        function filterPoints() {
+            renderCatalog();
+        }
+
+        function resetFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('toqueFilter').value = '';
+            renderCatalog();
+        }
+
+        // Auxiliares de Sanitização de Texto
+        function escapeHTML(str) {
+            if (!str) return '';
+            return str.replace(/[&<>"']/g, function(m) {
+                return {
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#039;'
+                }[m];
+            });
+        }
+
+        function escapeAndFormatLetra(str) {
+            if (!str) return '';
+            const escaped = escapeHTML(str);
+            return escaped.replace(/\(bis\)/gi, '<strong class="text-amber-900 font-semibold">(bis)</strong>');
+        }
+
+        // Toast de notificação UI (Substituto de alert)
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            if (!container) return;
+
+            const toast = document.createElement('div');
+            const bgClass = type === 'success' ? 'bg-emerald-800 text-white' : type === 'error' ? 'bg-red-800 text-white' : 'bg-slate-800 text-white';
+
+            toast.className = `px-4 py-2.5 rounded-xl text-xs font-medium shadow-xl transform transition-all duration-300 opacity-0 translate-y-2 flex items-center gap-2 ${bgClass}`;
+            toast.innerHTML = `<span>${escapeHTML(message)}</span>`;
+
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.remove('opacity-0', 'translate-y-2');
+            }, 10);
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
