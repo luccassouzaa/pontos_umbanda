@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pontos - Supabase</title>
+    <!-- Importação do SDK JS do Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 8px 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Lista de Pontos</h2>
+    <div id="status">Carregando dados...</div>
+
+    <table id="tabela-pontos" style="display: none;">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Linha ID</th>
+                <th>Título</th>
+                <th>Toque</th>
+                <th>Autor</th>
+                <th>Letra</th>
+                <th>Link</th>
+            </tr>
+        </thead>
+        <tbody id="corpo-tabela">
+        </tbody>
+    </table>
+
+    <script>
+        // Configuração do Supabase (Substitua pelos dados do seu projeto)
+        const SUPABASE_URL = 'https://sbaldrgmskyxlgtyqsja.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_7YucBK9E_YNY9GGY6BhXZA_M9lnY-FC';
+
+        const { createClient } = supabase;
+        const supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        async function buscarPontos() {
+            const statusDiv = document.getElementById('status');
+            const tabela = document.getElementById('tabela-pontos');
+            const corpoTabela = document.getElementById('corpo-tabela');
+
+            try {
+                // Consulta os dados da tabela 'pontos'
+                const { data, error } = await supabaseClient
+                    .from('pontos')
+                    .select('*');
+
+                if (error) {
+                    throw error;
+                }
+
+                if (!data || data.length === 0) {
+                    statusDiv.innerText = 'Nenhum ponto encontrado.';
+                    return;
+                }
+
+                statusDiv.style.display = 'none';
+                tabela.style.display = 'table';
+
+                // Preenche a tabela com os registros retornados
+                data.forEach(ponto => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${ponto.id ?? '-'}</td>
+                        <td>${ponto.linhaId ?? '-'}</td>
+                        <td>${ponto.titulo ?? '-'}</td>
+                        <td>${ponto.toque ?? '-'}</td>
+                        <td>${ponto.autor ?? '-'}</td>
+                        <td>${ponto.letra ?? '-'}</td>
+                        <td>${ponto.link ? `<a href="${ponto.link}" target="_blank">Acessar</a>` : '-'}</td>
+                    `;
+                    corpoTabela.appendChild(tr);
+                });
+
+            } catch (err) {
+                console.error('Erro ao buscar dados:', err);
+                statusDiv.innerText = `Erro ao carregar dados: ${err.message}`;
+            }
+        }
+
+        buscarPontos();
+    </script>
+</body>
+</html>
